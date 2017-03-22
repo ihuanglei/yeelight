@@ -1,22 +1,22 @@
-# 设备官网
+## 设备官网
 https://www.yeelight.com
 
-# 文档地址
+## 文档地址
 https://www.yeelight.com/download/Yeelight_Inter-Operation_Spec.pdf
 
 这里整合了yeelight的文档，重新封装了接口！
 
-### 组播地址
+## 组播地址
 >239.255.255.251:1982
 
-### 协议格式
+## 协议格式
     CMD * HTTP/1.1
     location:地址及端口
     method:命令
     param:参数(JSON字符串)
 
 
-### 支持的命令
+## 支持的命令
 
 >power_on      打开灯
 1. effect  [sudden|smooth] (不必填)
