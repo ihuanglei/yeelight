@@ -22,6 +22,7 @@ https://www.yeelight.com/download/Yeelight_Inter-Operation_Spec.pdf
 1. effect  [sudden|smooth] (不必填)
 2. duration 延时时间 30-n (不必填)
 
+
     CMD * HTTP/1.1
     location:192.168.1.100:12345
     method:power_on
@@ -30,6 +31,7 @@ https://www.yeelight.com/download/Yeelight_Inter-Operation_Spec.pdf
 >power_off     关闭灯
 1. effect  [sudden|smooth] (不必填)
 2. duration 延时时间 30-n (不必填)
+
 
     CMD * HTTP/1.1
     location:192.168.1.100:12345
@@ -52,6 +54,7 @@ https://www.yeelight.com/download/Yeelight_Inter-Operation_Spec.pdf
 
 >cron_add      延时关闭灯
 1. value 延时时间 0~n 整数
+
 
     CMD * HTTP/1.1
     location:192.168.1.100:12345
@@ -84,6 +87,7 @@ https://www.yeelight.com/download/Yeelight_Inter-Operation_Spec.pdf
 2. effect  [sudden|smooth] (不必填)
 3. duration 延时时间 30-n (不必填)
 
+
     CMD * HTTP/1.1
     location:192.168.1.100:12345
     method:set_bright
@@ -93,6 +97,7 @@ https://www.yeelight.com/download/Yeelight_Inter-Operation_Spec.pdf
 1. rgb  十进制颜色值
 2. effect  [sudden|smooth] (不必填)
 3. duration 延时时间 30-n (不必填)
+
 
     CMD * HTTP/1.1
     location:192.168.1.100:12345
@@ -104,6 +109,7 @@ https://www.yeelight.com/download/Yeelight_Inter-Operation_Spec.pdf
 2. sat
 2. effect  [sudden|smooth] (不必填)
 3. duration 延时时间 30-n (不必填)
+
 
     CMD * HTTP/1.1
     location:192.168.1.100:12345
@@ -134,6 +140,7 @@ https://www.yeelight.com/download/Yeelight_Inter-Operation_Spec.pdf
 >set_name      设置设备别名
 1. name  名称
 
+
     CMD * HTTP/1.1
     location:192.168.1.100:12345
     method:set_name
@@ -148,6 +155,7 @@ https://www.yeelight.com/download/Yeelight_Inter-Operation_Spec.pdf
 
 >get_prop      获取信息
 1. prop 获取的信息字段 power,bright,id,location,mode,color_mode,name
+
 
     CMD * HTTP/1.1
     location:192.168.1.100:12345
