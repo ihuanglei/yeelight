@@ -407,7 +407,7 @@ class YeeLightHttpdHandle(BaseHTTPServer.BaseHTTPRequestHandler):
             self.yeelight_handle(location, method, param)
         return
 
-    def do_SEARCH(self):
+    def do_DEVICES(self):
         self.send_response(200)
         self.end_headers()
         result = []
