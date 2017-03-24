@@ -240,12 +240,12 @@ class YeeLightServer:
         return self._yeelights
 
     # yeelight command search
-    def search(self):
+    def search(self, *args):
         command = self.SEARCH + self.CRLF + \
             'HOST: %s:%s' % (self.HOST_YEELIGHT, self.PORT_YEELIGHT) + self.CRLF + \
             'MAN: "ssdp:discover"' + self.CRLF + \
             'ST: wifi_bulb' + self.CRLF
-        self.socket_scan.sendto(
+        self._socket_scan.sendto(
             command, 0, (self.HOST_YEELIGHT, self.PORT_YEELIGHT))
 
     # control command
@@ -287,7 +287,7 @@ class YeeLightServer:
         try:
             str = json.dumps(
                 {'id': int(time.time()), 'method': method, 'params': data})
-            logging.debug('send command [%s]', str)
+            logging.debug('send command %s [%s]', addr, str)
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(3)
             host, port = addr.split(':')
@@ -302,6 +302,14 @@ class YeeLightServer:
     # discover
     def _discover(self, message):
         try:
+            if not hasattr(message, 'location'):
+                return
+
+            match = re.match(
+                r'yeelight://[0-9]{1,3}(\.[0-9]{1,3}){3}:([0-9]*)', message.location)
+            if match == None:
+                return
+
             yeelight = YeeLight()
             yeelight.id = message.id
             yeelight.name = message.name
@@ -311,7 +319,7 @@ class YeeLightServer:
             yeelight.hue = message.hue
             yeelight.rgb = message.rgb
             yeelight.bright = message.bright
-            yeelight.location = message.location
+            yeelight.location = message.location.split('//')[1]
 
             for tmp_yeelight in self._yeelights:
                 if yeelight.id == tmp_yeelight.id:
@@ -398,17 +406,21 @@ class YeeLightHttpdHandle(BaseHTTPServer.BaseHTTPRequestHandler):
         return self.server.yeelight_server.ccmd(location, method, param)
 
     def do_CMD(self):
-        method = self.headers.get('method', None)
-        location = self.headers.get('location', None)
-        param = self.headers.get('param', None)
+        method = self.headers.get('Method', None)
+        location = self.headers.get('Location', None)
+        param = self.headers.get('Param', None)
         self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Content-type', 'application/json')
         self.end_headers()
-        if method and location:
+        if method:
             self.yeelight_handle(location, method, param)
         return
 
     def do_DEVICES(self):
         self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Content-type', 'application/json')
         self.end_headers()
         result = []
         for yeelight in self.server.yeelight_server.get_yeelights():
@@ -417,6 +429,15 @@ class YeeLightHttpdHandle(BaseHTTPServer.BaseHTTPRequestHandler):
         return
 
     def do_GET(self):
+        return
+
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Headers',
+                         'Location,Method,Param')
+        self.send_header('Access-Control-Allow-Methods', 'DEVICES,CMD')
+        self.end_headers()
         return
 
     def translate_path(self, path):

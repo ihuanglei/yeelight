@@ -10,9 +10,9 @@ https://www.yeelight.com/download/Yeelight_Inter-Operation_Spec.pdf
 
 ```
 [CMD|DEVICES] * HTTP/1.1
-method:命令
-location:地址及端口
-param:参数(JSON字符串)
+Method:命令
+Location:地址及端口
+Param:参数(JSON字符串)
 ```
 
 ### 刷新接口
@@ -30,9 +30,9 @@ DEVICES * HTTP/1.1
 
 ```
 CMD * HTTP/1.1
-location:192.168.1.100:12345
-method:power_on
-param:{"effect":"smooth","duration":500}
+Location:192.168.1.100:12345
+Method:power_on
+Param:{"effect":"smooth","duration":500}
 ```
 
 >power_off     关闭灯
@@ -41,27 +41,27 @@ param:{"effect":"smooth","duration":500}
 
 ```
 CMD * HTTP/1.1
-location:192.168.1.100:12345
-method:power_off
-param:{"effect":"smooth","duration":500}
+Location:192.168.1.100:12345
+Method:power_off
+Param:{"effect":"smooth","duration":500}
 ```
 
 >start_cf
 
 ```
 CMD * HTTP/1.1
-location:192.168.1.100:12345
-method:start_cf
-param:
+Location:192.168.1.100:12345
+Method:start_cf
+Param:
 ```
 
 >stop_cf
 
 ```
 CMD * HTTP/1.1
-location:192.168.1.100:12345
-method:stop_cf
-param:
+Location:192.168.1.100:12345
+Method:stop_cf
+Param:
 ```
 
 >cron_add      延时关闭灯
@@ -69,36 +69,36 @@ param:
 
 ```
 CMD * HTTP/1.1
-location:192.168.1.100:12345
-method:cron_add
-param:{"value":10}
+Location:192.168.1.100:12345
+Method:cron_add
+Param:{"value":10}
 ```
 
 >cron_get      获取延时关闭灯时间
 
 ```
 CMD * HTTP/1.1
-location:192.168.1.100:12345
-method:cron_get
-param:
+Location:192.168.1.100:12345
+Method:cron_get
+Param:
 ```
 
 >cron_del      取消延时关闭灯
 
 ```
 CMD * HTTP/1.1
-location:192.168.1.100:12345
-method:cron_del
-param:
+Location:192.168.1.100:12345
+Method:cron_del
+Param:
 ```
 
 >set_adjust
 
 ```
 CMD * HTTP/1.1
-location:192.168.1.100:12345
-method:set_adjust
-param:
+Location:192.168.1.100:12345
+Method:set_adjust
+Param:
 ```
 
 >set_bright    设置灯亮度
@@ -108,9 +108,9 @@ param:
 
 ```
 CMD * HTTP/1.1
-location:192.168.1.100:12345
-method:set_bright
-param:{"brightness":50,"effect":"smooth","duration":500}
+Location:192.168.1.100:12345
+Method:set_bright
+Param:{"brightness":50,"effect":"smooth","duration":500}
 ```
 
 >set_rgb       设置灯颜色
@@ -120,9 +120,9 @@ param:{"brightness":50,"effect":"smooth","duration":500}
 
 ```
 CMD * HTTP/1.1
-location:192.168.1.100:12345
-method:set_rgb
-param:{"rgb":16711680,"effect":"smooth","duration":500}
+Location:192.168.1.100:12345
+Method:set_rgb
+Param:{"rgb":16711680,"effect":"smooth","duration":500}
 ```
 
 >set_hsv
@@ -133,36 +133,36 @@ param:{"rgb":16711680,"effect":"smooth","duration":500}
 
 ```
 CMD * HTTP/1.1
-location:192.168.1.100:12345
-method:set_hsv
-param:{"hue":10,"sat":10,"effect":"smooth","duration":500}
+Location:192.168.1.100:12345
+Method:set_hsv
+Param:{"hue":10,"sat":10,"effect":"smooth","duration":500}
 ```
 
 >set_ct_abx
 
 ```
 CMD * HTTP/1.1
-location:192.168.1.100:12345
-method:set_ct_abx
-param:
+Location:192.168.1.100:12345
+Method:set_ct_abx
+Param:
 ```
 
 >set_default   保存当前设置
 
 ```
 CMD * HTTP/1.1
-location:192.168.1.100:12345
-method:set_default
-param:
+Location:192.168.1.100:12345
+Method:set_default
+Param:
 ```
 
 >toggle        开灯/关灯
 
 ```
 CMD * HTTP/1.1
-location:192.168.1.100:12345
-method:toggle
-param:
+Location:192.168.1.100:12345
+Method:toggle
+Param:
 ```
 
 >set_name      设置设备别名
@@ -170,35 +170,35 @@ param:
 
 ```
 CMD * HTTP/1.1
-location:192.168.1.100:12345
-method:set_name
-param:{"name":"mylight"}
+Location:192.168.1.100:12345
+Method:set_name
+Param:{"name":"mylight"}
 ```
 
 >set_scene     设置场景
 
 ```
 CMD * HTTP/1.1
-location:192.168.1.100:12345
-method:set_scene
-param:
+Location:192.168.1.100:12345
+Method:set_scene
+Param:
 ```
 
 >get_prop      获取信息
-1. prop 获取的信息字段 power,bright,id,location,mode,color_mode,name
+1. prop 获取的信息字段 power,bright,id,Location,mode,color_mode,name
 
 ```
 CMD * HTTP/1.1
-location:192.168.1.100:12345
-method:get_prop
-param:{"prop":["power",bright"]}
+Location:192.168.1.100:12345
+Method:get_prop
+Param:{"prop":["power",bright"]}
 ```
 
 >search      重新扫描设备
 
 ```
 CMD * HTTP/1.1
-location:192.168.1.100:12345
-method:search
-param:
+Location:192.168.1.100:12345
+Method:search
+Param:
 ```

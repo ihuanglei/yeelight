@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>yeelight</title>
+</head>
+
+<body>
+  <div id="app">
+    <a href="javascript:;" @click="loadDevices">刷新</a>
+    <ul>
+      <li v-for="yeelight in yeelights">
+        <p>{{yeelight.name}}</p>
+        <div>
+          <a v-if="yeelight.power == 'off'" href="javascript:;" @click="cmd(yeelight.location,'power_on')">开灯</a>
+          <a v-else href="javascript:;" @click="cmd(yeelight.loction,'power_off')">关灯</a>
+          <a href="javascript:;">设为默认值</a>
+        </div>
+      </li>
+    </ul>
+  </div>
+  <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://cdn.bootcss.com/vue/2.2.4/vue.min.js"></script>
+  <script>
+    url = 'http://127.0.0.1:8866';
+
+    // 'set_bright', brightness
+
+    function search() {
+      _cmd(location, 'search')
+    }
+
+    function get_devices(callback) {
+      _ajax(url, 'DEVICES', callback)
+    }
+
+    function _cmd(location, method, param, callback) {
+      headers = {
+        Location: location,
+        Method: method,
+        Param: param
+      }
+      _ajax(url, 'CMD', callback, headers)
+    }
+
+    function _ajax(url, method, callback, headers) {
+      callback = callback || $.noop();
+      $.ajax({
+        url: url,
+        method: method,
+        headers: headers,
+      }).done(function(data) {
+        console.log(data);
+        callback(data);
+      });
+    }
+
+
+    var vue = new Vue({
+      el: '#app',
+      data: {
+        yeelights: []
+      },
+      methods: {
+        loadDevices: function() {
+          get_devices(function(data) {
+            vue.$data.yeelights = data
+          })
+        },
+        cmd: function(location, method, param) {
+          _cmd(location, method, param, function(data) {
+            console.log(data);
+          })
+        }
+      }
+    })
+  </script>
+</body>
+
+</html>

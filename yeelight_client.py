@@ -13,25 +13,26 @@ def send():
 NOTIFY * HTTP/1.1
 Host: 239.255.255.250:1982
 Cache-Control: max-age=3600
-Location: yeelight://192.168.1.239:55443
+Location:   yeelight://192.168.1.239:55443
 NTS: ssdp:alive
 Server: POSIX, UPnP/1.0 YGLC/1
-id: 0x000000000015243f
+id: 0x400000000015243f
 model: color
 fw_ver: 18
 support: get_prop set_default set_power toggle set_bright start_cf stop_cf set_scene
 cron_add cron_get cron_del set_ct_abx set_rgb
-power: on
+power: off
 bright: 100
 color_mode: 2
 ct: 4000
 rgb: 16711680
 hue: 100
 sat: 35
-name: my_bulb
+name: 卫生间
 '''
+    # s = '111'
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    print sock.sendto(s, 0, (HOST_CMD, PORT_CMD))
+    sock.sendto(s, 0, (HOST_CMD, PORT_CMD))
     # data, addr = sock.recvfrom(2048)
     # print data
     # sock.close()
