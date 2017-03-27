@@ -5,78 +5,103 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>yeelight</title>
+  <link href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.bootcss.com/vue/2.2.4/vue.min.js"></script>
+  <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+  <title>yl_test</title>
+  <style>
+    .panel {
+      margin: 10px;
+    }
+
+    .panel-footer {
+      border-bottom: 0;
+      background-color: transparent;
+    }
+  </style>
 </head>
 
 <body>
   <div id="app">
-    <a href="javascript:;" @click="loadDevices">刷新</a>
-    <ul>
-      <li v-for="yeelight in yeelights">
-        <p>{{yeelight.name}}</p>
-        <div>
-          <a v-if="yeelight.power == 'off'" href="javascript:;" @click="cmd(yeelight.location,'power_on')">开灯</a>
-          <a v-else href="javascript:;" @click="cmd(yeelight.loction,'power_off')">关灯</a>
-          <a href="javascript:;">设为默认值</a>
+    <nav class="navbar navbar-default navbar-fixed-bottom">
+      <div class="container-fluid">
+        <div class="navbar-header"></div>
+        <p class="navbar-text navbar-right"><a class="btn btn-default btn-sm" href="javascript:;" @click="refresh()">刷新</a></p>
+      </div>
+    </nav>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="panel panel-default" v-for="light in lights">
+          <div class="panel-heading">{{light.name}}</div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label>别名</label>
+              <input class="" v-model="light.name" @keyup.enter="cmd(light.location, 'set_name', '{name:\'light.name\'}')" value="light.name" placeholder="请输入别名">
+            </div>
+            <div class="form-group">
+              <label>亮度</label>
+              <input class=" " v-model.number="light.bright " @keyup.enter="cmd(light.location, 'set_bright', '{brightness: light.bright}')" value="light.bright">
+            </div>
+          </div>
+          <div class="panel-footer">
+            <a class="btn btn-default btn-sm" v-if="light.power=='off'" href="javascript:;" @click="cmd(light.location, 'power_on')"><span class="glyphicon glyphicon-adjust"></span> 开灯</a>
+            <a class="btn btn-default btn-sm" v-else href="javascript:;" @click="cmd(light.location, 'power_off')"><span class="glyphicon glyphicon-adjust"></span> 关灯</a>
+            <a class="btn btn-default btn-sm" href="javascript:;" @click="cmd(light.location, 'set_default')"><span class="glyphicon glyphicon-floppy-saved"></span> 保存</a>
+          </div>
         </div>
-      </li>
-    </ul>
+      </div>
+    </div>
   </div>
-  <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
-  <script src="https://cdn.bootcss.com/vue/2.2.4/vue.min.js"></script>
+
+
   <script>
     url = 'http://127.0.0.1:8866';
 
-    // 'set_bright', brightness
-
-    function search() {
-      _cmd(location, 'search')
-    }
-
-    function get_devices(callback) {
-      _ajax(url, 'DEVICES', callback)
-    }
-
-    function _cmd(location, method, param, callback) {
-      headers = {
-        Location: location,
-        Method: method,
-        Param: param
-      }
-      _ajax(url, 'CMD', callback, headers)
-    }
-
-    function _ajax(url, method, callback, headers) {
-      callback = callback || $.noop();
-      $.ajax({
-        url: url,
-        method: method,
-        headers: headers,
-      }).done(function(data) {
-        console.log(data);
-        callback(data);
-      });
-    }
-
-
     var vue = new Vue({
       el: '#app',
+      created: function() {
+        this.refresh();
+      },
       data: {
-        yeelights: []
+        lights: []
+      },
+      watch: {
+        'lights': function(val, oldVal) {
+          console.log(val);
+        }
       },
       methods: {
-        loadDevices: function() {
-          get_devices(function(data) {
-            vue.$data.yeelights = data
+        _ajax: function(url, method, callback, headers) {
+          callback = callback || $.noop();
+          $.ajax({
+            url: url,
+            method: method,
+            headers: headers,
+          }).done(function(data) {
+            console.log(data);
+            callback(data);
+          });
+        },
+        refresh: function() {
+          var me = this;
+          me.cmd(location, 'search');
+          me._ajax(url, 'DEVICES', function(data) {
+            me.$data.lights = data
           })
         },
         cmd: function(location, method, param) {
-          _cmd(location, method, param, function(data) {
-            console.log(data);
-          })
+          var me = this;
+          headers = {
+            Location: location,
+            Method: method,
+            Param: param
+          }
+          me._ajax(url, 'CMD', function(data) {
+            me.refresh();
+          }, headers)
         }
       }
-    })
+    });
   </script>
 </body>
 

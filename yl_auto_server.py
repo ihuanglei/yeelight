@@ -10,7 +10,10 @@ import urllib
 import urlparse
 import BaseHTTPServer
 import os
+import getopt
 
+
+debug = False
 
 __version__ = "0.1"
 
@@ -25,10 +28,10 @@ class Message:
     def __str__(self):
         return '\n'.join(['%s:%s' % item for item in self.__dict__.items()])
 
-# yee light
+# light
 
 
-class YeeLight:
+class Light:
 
     @property
     def location(self):
@@ -135,10 +138,10 @@ class YeeLightServer:
     # ssdp notify
     NOTIFY = 'NOTIFY * HTTP/1.1'
 
-    # default yeelight addr
-    HOST_YEELIGHT = '239.255.255.250'
+    # default Light addr
+    HOST_LIGHT = '239.255.255.250'
 
-    PORT_YEELIGHT = 1982
+    PORT_LIGHT = 1982
 
     # enter
     CR = '\r'
@@ -151,7 +154,7 @@ class YeeLightServer:
 
     def __init__(self):
         self._socket_scan = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self._yeelights = []
+        self._lights = []
 
     def __new__(cls, *args, **kwargs):
         if not cls.__instance:
@@ -159,94 +162,94 @@ class YeeLightServer:
                 cls, *args, **kwargs)
         return cls.__instance
 
-    # yeelight command get_prop
+    # Light command get_prop
     def get_prop(self, addr, arg):
         return self._cmd(addr, 'get_prop', arg.get('prop', []))
 
-    # yeelight command set_scene
+    # Light command set_scene
     def set_scene(self, addr, arg):
         return self._cmd(addr, 'set_scene', arg.get('class', []))
 
-    # yeelight command power_on
+    # Light command power_on
     def power_on(self, addr, arg):
         return self.set_power(addr, 'on', arg.get('effect', self.SMOOTH), arg.get('duration', 500))
 
-    # yeelight command power_off
+    # Light command power_off
     def power_off(self, addr, arg):
         return self.set_power(addr, 'off', arg.get('effect', self.SMOOTH), arg.get('duration', 500))
 
-    # yeelight command set_power
+    # Light command set_power
     def set_power(self, addr, stat, effect, duration):
         return self._cmd(addr, 'set_power', [stat, effect, duration])
 
-    # yeelight command start_cf
+    # Light command start_cf
     def start_cf(self, addr, arg):
         return self._cmd(addr, 'start_cf', [arg.get('count', 0), arg.get('action', 0), arg.get('flow_expression', "")])
 
-    # yeelight command stop_cf
+    # Light command stop_cf
     def stop_cf(self, addr, arg):
         return self._cmd(addr, 'stop_cf', [])
 
-    # yeelight command cron_add
+    # Light command cron_add
     def cron_add(self, addr, arg):
         return self._cmd(addr, 'cron_add', [0, arg.get('value', 0)])
 
-    # yeelight command cron_get
+    # Light command cron_get
     def cron_get(self, addr, arg):
         return self._cmd(addr, 'cron_get', [0])
 
-    # yeelight command cron_del
+    # Light command cron_del
     def cron_del(self, addr, arg):
         return self._cmd(addr, 'cron_del', [0])
 
-    # yeelight command set_adjust
+    # Light command set_adjust
     def set_adjust(self, addr, arg):
         return self._cmd(addr, 'set_adjust', [arg.get('action', 'increase'), arg.get('prop', 'bright')])
 
-    # yeelight command set_bright
+    # Light command set_bright
     def set_bright(self, addr, arg):
         return self._cmd(addr, 'set_bright', [arg.get('brightness', 30),  arg.get('effect', self.SMOOTH), arg.get('duration', 500)])
 
-    # yeelight command set_rgb
+    # Light command set_rgb
     def set_rgb(self, addr, arg):
         return self._cmd(addr, 'set_rgb', [arg.get('rgb', 16777215),  arg.get('effect', self.SMOOTH), arg.get('duration', 500)])
 
-    # yeelight command set_hsv
+    # Light command set_hsv
     def set_hsv(self, addr, arg):
         return self._cmd(addr, 'set_hsv', [arg.get('hue', 0), arg.get('sat', 0), arg.get('effect', self.SMOOTH), arg.get('duration', 500)])
 
-    # yeelight command set_ct_abx
+    # Light command set_ct_abx
     def set_ct_abx(self, addr, arg):
         return self._cmd(addr, 'set_ct_abx', [arg.get('ct_value', 1700), arg.get('effect', self.SMOOTH), arg.get('duration', 500)])
 
-    # yeelight command set_default
+    # Light command set_default
     def set_default(self, addr, arg):
         return self._cmd(addr, 'set_default', [])
 
-    # yeelight command toggle
+    # Light command toggle
     def toggle(self, addr, arg):
         return self._cmd(addr, 'toggle', [])
 
-    # yeelight command set_name
+    # Light command set_name
     def set_name(self, addr, arg):
         return self._cmd(addr, 'set_name', arg.get('name', 'no name'))
 
-    # yeelight command set_music
+    # Light command set_music
     def set_music(self, addr, arg):
         pass
 
-    # yeelight
-    def get_yeelights(self):
-        return self._yeelights
+    # Light
+    def get_lights(self):
+        return self._lights
 
-    # yeelight command search
+    # Light command search
     def search(self, *args):
         command = self.SEARCH + self.CRLF + \
-            'HOST: %s:%s' % (self.HOST_YEELIGHT, self.PORT_YEELIGHT) + self.CRLF + \
+            'HOST: %s:%s' % (self.HOST_LIGHT, self.PORT_LIGHT) + self.CRLF + \
             'MAN: "ssdp:discover"' + self.CRLF + \
             'ST: wifi_bulb' + self.CRLF
         self._socket_scan.sendto(
-            command, 0, (self.HOST_YEELIGHT, self.PORT_YEELIGHT))
+            command, 0, (self.HOST_LIGHT, self.PORT_LIGHT))
 
     # control command
     def ccmd(self, location, method, param):
@@ -256,7 +259,7 @@ class YeeLightServer:
         except Exception, e:
             obj = {}
         try:
-            getattr(self, method)(location, obj)
+            return getattr(self, method)(location, obj)
         except Exception, e:
             logging.warning('method(%s) error', e)
 
@@ -282,7 +285,7 @@ class YeeLightServer:
             logging.error(e)
         return message
 
-    # send command to yeelight
+    # send command to Light
     def _cmd(self, addr, method, data):
         try:
             str = json.dumps(
@@ -310,26 +313,26 @@ class YeeLightServer:
             if match == None:
                 return
 
-            yeelight = YeeLight()
-            yeelight.id = message.id
-            yeelight.name = message.name
-            yeelight.power = message.power
-            yeelight.model = message.model
-            yeelight.color_mode = message.color_mode
-            yeelight.hue = message.hue
-            yeelight.rgb = message.rgb
-            yeelight.bright = message.bright
-            yeelight.location = message.location.split('//')[1]
+            light = Light()
+            light.id = message.id
+            light.name = message.name
+            light.power = message.power
+            light.model = message.model
+            light.color_mode = message.color_mode
+            light.hue = message.hue
+            light.rgb = message.rgb
+            light.bright = message.bright
+            light.location = message.location.split('//')[1]
 
-            for tmp_yeelight in self._yeelights:
-                if yeelight.id == tmp_yeelight.id:
-                    self._yeelights.remove(tmp_yeelight)
+            for tmp_light in self._lights:
+                if light.id == tmp_light.id:
+                    self._lights.remove(tmp_light)
                     break
 
-            self._yeelights.append(yeelight)
+            self._lights.append(light)
 
         except Exception, e:
-            logging.error('parse yeelight error(%s)', e)
+            logging.error('parse light error(%s)', e)
 
     # empty
     def _empty(self, *args):
@@ -355,10 +358,10 @@ class YeeLightServer:
         self._socket_passive.setsockopt(
             socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # bind
-        self._socket_passive.bind(('', self.PORT_YEELIGHT))
-        # add yeelight mcast
+        self._socket_passive.bind(('', self.PORT_LIGHT))
+        # add Light mcast
         self._socket_passive.setsockopt(socket.SOL_IP, socket.IP_ADD_MEMBERSHIP,
-                                        socket.inet_aton(self.HOST_YEELIGHT) + socket.inet_aton(local_ip))
+                                        socket.inet_aton(self.HOST_LIGHT) + socket.inet_aton(local_ip))
 
         while True:
             try:
@@ -369,9 +372,9 @@ class YeeLightServer:
             except socket.error, e:
                 logging.error(e)
 
-        # leave yeelight mcast
+        # leave Light mcast
         self._socket_passive.setsockopt(socket.SOL_IP, socket.IP_DROP_MEMBERSHIP,
-                                        socket.inet_aton(HOST_YEELIGHT) +
+                                        socket.inet_aton(HOST_LIGHT) +
                                         socket.inet_aton(local_ip))
         self._socket_passive.close()
 
@@ -388,22 +391,23 @@ class YeeLightServer:
         t2.start()
 
 
-class YeeLightHttpdServer(BaseHTTPServer.HTTPServer):
+class YLAutoHttpdServer(BaseHTTPServer.HTTPServer):
 
     @property
-    def yeelight_server(self):
-        return self._yeelight_server
+    def light_server(self):
+        return self._light_server
 
     def run(self):
-        self._yeelight_server = YeeLightServer()
-        self._yeelight_server.start()
+        # yeelight
+        self._light_server = YeeLightServer()
+        self._light_server.start()
         self.serve_forever()
 
 
-class YeeLightHttpdHandle(BaseHTTPServer.BaseHTTPRequestHandler):
+class YLAutoHttpdHandle(BaseHTTPServer.BaseHTTPRequestHandler):
 
-    def yeelight_handle(self, location, method, param=None):
-        return self.server.yeelight_server.ccmd(location, method, param)
+    def light_handle(self, location, method, param=None):
+        return self.server.light_server.ccmd(location, method, param)
 
     def do_CMD(self):
         method = self.headers.get('Method', None)
@@ -414,7 +418,8 @@ class YeeLightHttpdHandle(BaseHTTPServer.BaseHTTPRequestHandler):
         self.send_header('Content-type', 'application/json')
         self.end_headers()
         if method:
-            self.yeelight_handle(location, method, param)
+            result = self.light_handle(location, method, param)
+            self.wfile.write(result)
         return
 
     def do_DEVICES(self):
@@ -423,8 +428,8 @@ class YeeLightHttpdHandle(BaseHTTPServer.BaseHTTPRequestHandler):
         self.send_header('Content-type', 'application/json')
         self.end_headers()
         result = []
-        for yeelight in self.server.yeelight_server.get_yeelights():
-            result.append(yeelight.to_dict())
+        for light in self.server.light_server.get_lights():
+            result.append(light.to_dict())
         self.wfile.write(json.dumps(result))
         return
 
@@ -433,10 +438,11 @@ class YeeLightHttpdHandle(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def do_OPTIONS(self):
         self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Headers',
-                         'Location,Method,Param')
-        self.send_header('Access-Control-Allow-Methods', 'DEVICES,CMD')
+        if debug:
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Access-Control-Allow-Headers',
+                             'Location,Method,Param')
+            self.send_header('Access-Control-Allow-Methods', 'DEVICES,CMD')
         self.end_headers()
         return
 
@@ -462,8 +468,24 @@ class YeeLightHttpdHandle(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
 def run():
-    httpd = YeeLightHttpdServer(("", 8866), YeeLightHttpdHandle)
+    httpd = YLAutoHttpdServer(("", 8866), YLAutoHttpdHandle)
     httpd.run()
 
+
+def usage():
+    print 'yeelight.py -h -d'
+    sys.exit(1)
+
 if __name__ == '__main__':
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hd")
+    except getopt.GetoptError:
+        usage()
+
+    for op, value in opts:
+        if op == '-d':
+            debug = True
+        if op == '-h':
+            usage()
+
     run()
