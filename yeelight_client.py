@@ -16,7 +16,7 @@ Cache-Control: max-age=3600
 Location:   yeelight://192.168.1.239:55443
 NTS: ssdp:alive
 Server: POSIX, UPnP/1.0 YGLC/1
-id: 0x200000000015243f
+id: 0x100000000015243f
 model: color
 fw_ver: 18
 support: get_prop set_default set_power toggle set_bright start_cf stop_cf set_scene
@@ -28,7 +28,7 @@ ct: 4000
 rgb: 16711680
 hue: 100
 sat: 35
-name: 厨房
+name: 卧室
 '''
     # s = '111'
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

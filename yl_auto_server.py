@@ -162,6 +162,31 @@ class YeeLightServer:
                 cls, *args, **kwargs)
         return cls.__instance
 
+    # light prop
+    def get_props(self, addr):
+        try:
+            ret_light = None
+            props = {'prop': ['name', 'power', 'model', 'color_mode',
+                              'hue', 'rgb', 'bright']}
+            ret = self.get_prop(addr, props)
+            if ret:
+                result = json.loads(ret).get('result', [])
+                if len(result) > 0:
+                    for light in self._lights:
+                        if light.location == addr:
+                            light.name = result[0]
+                            light.power = result[1]
+                            light.model = result[2]
+                            light.color_mode = result[3]
+                            light.hue = result[4]
+                            light.rgb = result[5]
+                            light.bright = result[6]
+                            ret_light = light
+                            break
+            return ret
+        except Exception, e:
+            logging.error(e)
+
     # Light command get_prop
     def get_prop(self, addr, arg):
         return self._cmd(addr, 'get_prop', arg.get('prop', []))
@@ -232,7 +257,7 @@ class YeeLightServer:
 
     # Light command set_name
     def set_name(self, addr, arg):
-        return self._cmd(addr, 'set_name', arg.get('name', 'no name'))
+        return self._cmd(addr, 'set_name', arg.get('name', 'noname'))
 
     # Light command set_music
     def set_music(self, addr, arg):
@@ -255,13 +280,15 @@ class YeeLightServer:
     def ccmd(self, location, method, param):
         param = param or {}
         try:
-            obj = json.loads(param)
+            obj = json.loads(urllib.unquote(param))
         except Exception, e:
             obj = {}
         try:
             return getattr(self, method)(location, obj)
         except Exception, e:
             logging.warning('method(%s) error', e)
+        finally:
+            self.get_props(location)
 
     # parse header
     def _parse(self, data):
@@ -301,6 +328,7 @@ class YeeLightServer:
             return response
         except Exception, e:
             logging.error(e)
+            return None
 
     # discover
     def _discover(self, message):
@@ -324,15 +352,19 @@ class YeeLightServer:
             light.bright = message.bright
             light.location = message.location.split('//')[1]
 
-            for tmp_light in self._lights:
-                if light.id == tmp_light.id:
-                    self._lights.remove(tmp_light)
-                    break
-
-            self._lights.append(light)
+            self.add_light(light)
 
         except Exception, e:
             logging.error('parse light error(%s)', e)
+
+    # add
+    def add_light(self, light):
+        for tmp_light in self._lights:
+            if light.id == tmp_light.id:
+                self._lights.remove(tmp_light)
+                break
+
+        self._lights.append(light)
 
     # empty
     def _empty(self, *args):

@@ -26,27 +26,33 @@
     <nav class="navbar navbar-default navbar-fixed-bottom">
       <div class="container-fluid">
         <div class="navbar-header"></div>
-        <p class="navbar-text navbar-right"><a class="btn btn-default btn-sm" href="javascript:;" @click="refresh()">刷新</a></p>
+        <p class="navbar-text navbar-right">
+          <a class="btn btn-default btn-sm" href="javascript:;" @click="refresh"><span class="glyphicon glyphicon-repeat"></span> 刷新</a>
+        </p>
       </div>
     </nav>
     <div class="container-fluid">
       <div class="row">
+        <div class="pull-right">
+          <span class="label label-warning" v-show="loading">loading...</span>
+          <span class="label label-success" v-show="success">Success</span>
+        </div>
         <div class="panel panel-default" v-for="light in lights">
-          <div class="panel-heading">{{light.name}}</div>
+          <div class="panel-heading">{{light.name | default('未命名')}}</div>
           <div class="panel-body">
             <div class="form-group">
               <label>别名</label>
-              <input class="" v-model="light.name" @keyup.enter="cmd(light.location, 'set_name', '{name:\'light.name\'}')" value="light.name" placeholder="请输入别名">
+              <input class="" v-model="light.name" @keyup.enter="set_name(light.location, light.name)" value="light.name" placeholder="请输入别名">
             </div>
             <div class="form-group">
               <label>亮度</label>
-              <input class=" " v-model.number="light.bright " @keyup.enter="cmd(light.location, 'set_bright', '{brightness: light.bright}')" value="light.bright">
+              <input class=" " v-model.number="light.bright " @keyup.enter="set_bright(light.location, light.bright)" value="light.bright">
             </div>
           </div>
           <div class="panel-footer">
-            <a class="btn btn-default btn-sm" v-if="light.power=='off'" href="javascript:;" @click="cmd(light.location, 'power_on')"><span class="glyphicon glyphicon-adjust"></span> 开灯</a>
-            <a class="btn btn-default btn-sm" v-else href="javascript:;" @click="cmd(light.location, 'power_off')"><span class="glyphicon glyphicon-adjust"></span> 关灯</a>
-            <a class="btn btn-default btn-sm" href="javascript:;" @click="cmd(light.location, 'set_default')"><span class="glyphicon glyphicon-floppy-saved"></span> 保存</a>
+            <a class="btn btn-default btn-sm" v-if="light.power=='off'" href="javascript:;" @click="power_on(light.location)"><span class="glyphicon glyphicon-adjust"></span> 开灯</a>
+            <a class="btn btn-default btn-sm" v-else href="javascript:;" @click="power_off(light.location)"><span class="glyphicon glyphicon-adjust"></span> 关灯</a>
+            <a class="btn btn-default btn-sm" href="javascript:;" @click="save(light.location)"><span class="glyphicon glyphicon-floppy-saved"></span> 保存</a>
           </div>
         </div>
       </div>
@@ -57,13 +63,20 @@
   <script>
     url = 'http://127.0.0.1:8866';
 
-    var vue = new Vue({
+    Vue.filter('default', function(input, value) {
+      value = value || '';
+      return input || value;
+    })
+
+    var app = new Vue({
       el: '#app',
       created: function() {
         this.refresh();
       },
       data: {
-        lights: []
+        lights: [],
+        loading: false,
+        success: false
       },
       watch: {
         'lights': function(val, oldVal) {
@@ -72,19 +85,27 @@
       },
       methods: {
         _ajax: function(url, method, callback, headers) {
+          var me = this;
           callback = callback || $.noop();
           $.ajax({
             url: url,
             method: method,
             headers: headers,
+            dataType: 'json',
+            beforeSend: function() {
+              me.$data.loading = true;
+            },
+            complete: function() {
+              me.$data.loading = false;
+            }
           }).done(function(data) {
             console.log(data);
             callback(data);
+            loading = false;
           });
         },
         refresh: function() {
           var me = this;
-          me.cmd(location, 'search');
           me._ajax(url, 'DEVICES', function(data) {
             me.$data.lights = data
           })
@@ -94,11 +115,32 @@
           headers = {
             Location: location,
             Method: method,
-            Param: param
+            Param: param || {}
           }
           me._ajax(url, 'CMD', function(data) {
             me.refresh();
           }, headers)
+        },
+        getProp: function() {
+          this.cmd('get_props');
+        },
+        search: function() {
+          this.cmd('', 'search');
+        },
+        set_name: function(location, name) {
+          this.cmd(location, 'set_name', '{"name": "' + encodeURIComponent(name) + '"}');
+        },
+        set_bright: function(location, brightness) {
+          this.cmd(location, 'set_bright', '{"brightness": ' + brightness + '}');
+        },
+        power_on: function(location) {
+          this.cmd(location, 'power_on');
+        },
+        power_off: function(location) {
+          this.cmd(location, 'power_off');
+        },
+        save: function(location) {
+          this.cmd(location, 'set_default');
         }
       }
     });
