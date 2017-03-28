@@ -65,7 +65,7 @@ Param:
 ```
 
 >cron_add      延时关闭灯
-1. value 延时时间 0~n 整数
+1. value 延时时间 0~n 整数 分钟
 
 ```
 CMD * HTTP/1.1
@@ -191,7 +191,7 @@ Param:
 CMD * HTTP/1.1
 Location:192.168.1.100:12345
 Method:get_prop
-Param:{"prop":["power",bright"]}
+Param:{"prop":["power","bright"]}
 ```
 
 >search      重新扫描设备
