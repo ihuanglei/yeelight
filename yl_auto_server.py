@@ -2,7 +2,6 @@ import time
 import re
 import json
 import socket
-import sys
 import threading
 import logging
 import posixpath
@@ -11,7 +10,11 @@ import urlparse
 import BaseHTTPServer
 import os
 import getopt
+import base64
+import sys
 
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 debug = False
 
@@ -80,6 +83,14 @@ class Light:
     @hue.setter
     def hue(self, value):
         self._hue = value
+
+    @property
+    def sat(self):
+        return self._sat
+
+    @sat.setter
+    def sat(self, value):
+        self._sat = value
 
     @property
     def rgb(self):
@@ -167,7 +178,7 @@ class YeeLightServer:
         try:
             ret_light = None
             props = {'prop': ['name', 'power', 'model', 'color_mode',
-                              'hue', 'rgb', 'bright']}
+                              'hue', 'sat', 'rgb', 'bright']}
             ret = self.get_prop(addr, props)
             if ret:
                 result = json.loads(ret).get('result', [])
@@ -180,7 +191,8 @@ class YeeLightServer:
                             light.color_mode = result[3]
                             light.hue = result[4]
                             light.rgb = result[5]
-                            light.bright = result[6]
+                            light.sat = result[6]
+                            light.bright = result[7]
                             ret_light = light
                             break
             return ret
@@ -257,7 +269,7 @@ class YeeLightServer:
 
     # Light command set_name
     def set_name(self, addr, arg):
-        return self._cmd(addr, 'set_name', arg.get('name', 'noname'))
+        return self._cmd(addr, 'set_name', [base64.b64encode(arg.get('name', 'noname'))])
 
     # Light command set_music
     def set_music(self, addr, arg):
@@ -289,8 +301,8 @@ class YeeLightServer:
             logging.warning('method(%s) error', e)
         finally:
             self.get_props(location)
-
     # parse header
+
     def _parse(self, data):
         message = Message()
         try:

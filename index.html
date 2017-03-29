@@ -6,10 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <link href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.bootcss.com/vue/2.2.4/vue.min.js"></script>
-  <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+  <link href="https://cdn.bootcss.com/rangeslider.js/2.3.0/rangeslider.min.css" rel="stylesheet">
   <title>yl_test</title>
   <style>
+    [v-cloak] {
+      display: none;
+    }
+
     .panel {
       margin: 10px;
     }
@@ -18,35 +21,59 @@
       border-bottom: 0;
       background-color: transparent;
     }
+
+    .form-control {
+      display: inline-block;
+      width: auto;
+      height: 30px;
+      margin-left: 10px;
+    }
+
+    input[type=range] {
+      display: inline-block;
+      width: auto;
+      vertical-align: middle;
+    }
   </style>
 </head>
 
 <body>
   <div id="app">
-    <nav class="navbar navbar-default navbar-fixed-bottom">
+    <nav class="navbar navbar-default">
       <div class="container-fluid">
-        <div class="navbar-header"></div>
-        <p class="navbar-text navbar-right">
-          <a class="btn btn-default btn-sm" href="javascript:;" @click="refresh"><span class="glyphicon glyphicon-repeat"></span> 刷新</a>
-        </p>
+        <button class="btn btn-default btn-sm navbar-btn" @click="scan"><span class="glyphicon glyphicon-repeat"></span> 扫描设备</button>
+        <p class="navbar-right label label-warning" v-show="loading">loading...</p>
       </div>
     </nav>
     <div class="container-fluid">
       <div class="row">
-        <div class="pull-right">
-          <span class="label label-warning" v-show="loading">loading...</span>
-          <span class="label label-success" v-show="success">Success</span>
-        </div>
-        <div class="panel panel-default" v-for="light in lights">
+        <div class="panel panel-default" v-cloak v-for="light in lights">
           <div class="panel-heading">{{light.name | default('未命名')}}</div>
           <div class="panel-body">
             <div class="form-group">
-              <label>别名</label>
-              <input class="" v-model="light.name" @keyup.enter="set_name(light.location, light.name)" value="light.name" placeholder="请输入别名">
+              <label class="control-label">别名</label>
+              <input class="form-control" v-model.trim="light.name" @keyup.enter="set_name(light.location, light.name)" value="light.name" placeholder="请输入别名">
             </div>
             <div class="form-group">
-              <label>亮度</label>
-              <input class=" " v-model.number="light.bright " @keyup.enter="set_bright(light.location, light.bright)" value="light.bright">
+              <label class="control-label">亮度</label>
+              <input class="form-control" v-model.number="light.bright" type="range" min="1" max="100" step="1" :value="light.bright" :data-location="light.location">
+              <!-- <input class="form-control" slider v-model.number="light.bright" @keyup.enter="set_bright(light.location, light.bright)"> -->
+            </div>
+            <div v-show="light.model != 'mono'">
+              <div class="form-group">
+                <label class="control-label">颜色</label>
+                <input class="form-control" v-model.number="light.rgb" @keyup.enter="set_rgb(light.location, light.rgb)" value="light.rgb">
+              </div>
+              <div v-show="light.color_mode == 3">
+                <div class="form-group">
+                  <label class="control-label">色调</label>
+                  <input class="form-control" v-model.number="light.hue" @keyup.enter="set_hsv(light.location, light.hue, light.sat)" value="light.hue">
+                </div>
+                <div class="form-group">
+                  <label class="control-label">饱和</label>
+                  <input class="form-control" v-model.number="light.sat" @keyup.enter="set_hsv(light.location, light.hue, light.sat)" value="light.sat">
+                </div>
+              </div>
             </div>
           </div>
           <div class="panel-footer">
@@ -59,7 +86,9 @@
     </div>
   </div>
 
-
+  <script src="https://cdn.bootcss.com/vue/2.2.4/vue.min.js"></script>
+  <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://cdn.bootcss.com/rangeslider.js/2.3.0/rangeslider.min.js"></script>
   <script>
     url = 'http://127.0.0.1:8866';
 
@@ -71,17 +100,26 @@
     var app = new Vue({
       el: '#app',
       created: function() {
+        var me = this;
         this.refresh();
+        $('input[type="range"]').rangeslider({
+          polyfill: true,
+          onSlide: function(position, value) {
+            console.log(value);
+          }
+        });
       },
       data: {
         lights: [],
-        loading: false,
-        success: false
+        loading: false
       },
       watch: {
-        'lights': function(val, oldVal) {
-          console.log(val);
-        }
+        // lights: {
+        //   handler: function(newVal) {
+        //     console.log(newVal)
+        //   },
+        //   deep: true
+        // }
       },
       methods: {
         _ajax: function(url, method, callback, headers) {
@@ -110,28 +148,44 @@
             me.$data.lights = data
           })
         },
-        cmd: function(location, method, param) {
+        cmd: function(location, method, param, callback) {
           var me = this;
+          if (typeof(param) == 'function') {
+            callback = param;
+            param = '{}';
+          }
           headers = {
             Location: location,
             Method: method,
-            Param: param || {}
+            Param: param || '{}'
           }
           me._ajax(url, 'CMD', function(data) {
-            me.refresh();
+            if (callback) {
+              callback();
+            } else {
+              me.refresh();
+            }
           }, headers)
         },
-        getProp: function() {
-          this.cmd('get_props');
-        },
-        search: function() {
-          this.cmd('', 'search');
+        scan: function() {
+          var me = this;
+          this.cmd('*', 'search', function() {
+            setTimeout(function() {
+              me.refresh();
+            }, 3000);
+          })
         },
         set_name: function(location, name) {
           this.cmd(location, 'set_name', '{"name": "' + encodeURIComponent(name) + '"}');
         },
         set_bright: function(location, brightness) {
           this.cmd(location, 'set_bright', '{"brightness": ' + brightness + '}');
+        },
+        set_rgb: function(location, rgb) {
+          this.cmd(location, 'set_rgb', '{"rgb": ' + rgb + '}');
+        },
+        set_hsv: function(location, hue, sat) {
+          this.cmd(location, 'set_hsv', '{"hue": ' + hue + ',"sat":' + sat + '}');
         },
         power_on: function(location) {
           this.cmd(location, 'power_on');
@@ -144,6 +198,32 @@
         }
       }
     });
+
+    // $(function() {
+    //     $('input[type="range"]').rangeslider({
+    //       // Deactivate the feature detection
+    //       polyfill: false,
+    //       // Callback function
+    //       onInit: function() {},
+    //       // Callback function
+    //       onSlide: function(position, value) {
+    //         console.log('onSlide');
+    //         console.log('position: ' + position, 'value: ' + value);
+    //       },
+    //       // Callback function
+    //       onSlideEnd: function(position, value) {
+    //         console.log('onSlideEnd');
+    //         console.log('position: ' + position, 'value: ' + value);
+    //       }
+    //     })
+    //   })
+    // polyfill: true,
+    // onSlide: function(position, value) {
+    //   console.log(value);
+    // },
+    // onSlideEnd: function(position, value) {
+    //   me.set_bright(this.data('location'), value);
+    // }
   </script>
 </body>
 
