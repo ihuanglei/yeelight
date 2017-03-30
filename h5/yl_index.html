@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <link href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.bootcss.com/rangeslider.js/2.3.0/rangeslider.min.css" rel="stylesheet">
   <title>yl_test</title>
   <style>
     [v-cloak] {
@@ -146,7 +145,6 @@
   </div>
 
   <script src="https://cdn.bootcss.com/vue/2.2.4/vue.min.js"></script>
-  <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
   <script src="https://cdn.bootcss.com/es6-promise/4.1.0/es6-promise.auto.min.js"></script>
   <script src="https://cdn.bootcss.com/axios/0.15.3/axios.min.js"></script>
   <script>
@@ -190,22 +188,6 @@
           }).catch(function(error) {
             console.log(error);
           });
-          // $.ajax({
-          //   url: url,
-          //   method: method,
-          //   headers: headers,
-          //   dataType: 'json',
-          //   beforeSend: function() {
-          //     me.$data.loading = true;
-          //   },
-          //   complete: function() {
-          //     me.$data.loading = false;
-          //   }
-          // }).done(function(data) {
-          //   console.log(data);
-          //   callback(data);
-          //   loading = false;
-          // })
         },
         refresh: function() {
           var me = this;
