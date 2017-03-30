@@ -7,18 +7,19 @@ import logging
 import posixpath
 import urllib
 import urlparse
-import BaseHTTPServer
 import os
 import getopt
 import base64
 import sys
+import BaseHTTPServer
+import SocketServer
 
 reload(sys)
 sys.setdefaultencoding('utf8')
 
-debug = False
-
 __version__ = "0.1"
+
+debug = False
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
@@ -34,7 +35,7 @@ class Message:
 # light
 
 
-class Light:
+class Light(object):
 
     @property
     def location(self):
@@ -58,7 +59,7 @@ class Light:
 
     @name.setter
     def name(self, value):
-        self._name = value
+        self._name = base64.b64decode(value)
 
     @property
     def power(self):
@@ -120,7 +121,8 @@ class Light:
         dict = {}
         for item in self.__dict__.items():
             key, value = item
-            dict[key] = value
+            # first char _
+            dict[key[1:]] = value
         return dict
 
     def __str__(self):
@@ -301,6 +303,7 @@ class YeeLightServer:
             logging.warning('method(%s) error', e)
         finally:
             self.get_props(location)
+
     # parse header
 
     def _parse(self, data):
@@ -331,7 +334,7 @@ class YeeLightServer:
                 {'id': int(time.time()), 'method': method, 'params': data})
             logging.debug('send command %s [%s]', addr, str)
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(3)
+            sock.settimeout(2)
             host, port = addr.split(':')
             sock.connect((host, int(port)))
             sock.send(str + self.CRLF)
@@ -357,12 +360,13 @@ class YeeLightServer:
             light.id = message.id
             light.name = message.name
             light.power = message.power
+            light.location = message.location.split('//')[1]
             light.model = message.model
             light.color_mode = message.color_mode
-            light.hue = message.hue
             light.rgb = message.rgb
+            light.hue = message.hue
+            light.sat = message.sat
             light.bright = message.bright
-            light.location = message.location.split('//')[1]
 
             self.add_light(light)
 
@@ -435,7 +439,7 @@ class YeeLightServer:
         t2.start()
 
 
-class YLAutoHttpdServer(BaseHTTPServer.HTTPServer):
+class YLAutoHttpdServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
 
     @property
     def light_server(self):
@@ -450,6 +454,8 @@ class YLAutoHttpdServer(BaseHTTPServer.HTTPServer):
 
 class YLAutoHttpdHandle(BaseHTTPServer.BaseHTTPRequestHandler):
 
+    html_index = None
+
     def light_handle(self, location, method, param=None):
         return self.server.light_server.ccmd(location, method, param)
 
@@ -458,43 +464,42 @@ class YLAutoHttpdHandle(BaseHTTPServer.BaseHTTPRequestHandler):
         location = self.headers.get('Location', None)
         param = self.headers.get('Param', None)
         self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Content-type', 'application/json')
         self.end_headers()
         if method:
-            result = self.light_handle(location, method, param)
-            self.wfile.write(result)
+            self.light_handle(location, method, param)
+            lights = self.server.light_server.get_lights()
+            result = []
+            for light in lights:
+                result.append(light.to_dict())
+            self.wfile.write(json.dumps(result))
         return
 
     def do_DEVICES(self):
         self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Content-type', 'application/json')
         self.end_headers()
+        lights = self.server.light_server.get_lights()
         result = []
-        for light in self.server.light_server.get_lights():
+        for light in lights:
             result.append(light.to_dict())
         self.wfile.write(json.dumps(result))
         return
 
     def do_GET(self):
-        return
-
-    def do_OPTIONS(self):
         self.send_response(200)
-        if debug:
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.send_header('Access-Control-Allow-Headers',
-                             'Location,Method,Param')
-            self.send_header('Access-Control-Allow-Methods', 'DEVICES,CMD')
+        self.send_header('Content-Type', 'text/html')
         self.end_headers()
+
+        if not self.html_index or debug:
+            self.html_index = open('../h5/yl_index.html').read()
+
+        self.wfile.write(self.html_index)
         return
 
     def translate_path(self, path):
-        # abandon query parameters
         path = path.split('?', 1)[0]
         path = path.split('#', 1)[0]
-        # Don't forget explicit trailing slash when normalizing. Issue17324
         trailing_slash = path.rstrip().endswith('/')
         path = posixpath.normpath(urllib.unquote(path))
         words = path.split('/')
