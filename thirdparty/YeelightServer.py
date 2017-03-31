@@ -3,28 +3,9 @@ import re
 import json
 import socket
 import threading
-import logging
-import posixpath
-import urllib
-import urlparse
-import os
-import getopt
 import base64
-import sys
-import BaseHTTPServer
-import SocketServer
-
-reload(sys)
-sys.setdefaultencoding('utf8')
-
-__version__ = "0.1"
-
-debug = False
-
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
-
-# common message
+import logging
+from server.YLAutoHttpdServer import YLBaseServer
 
 
 class Message:
@@ -32,14 +13,12 @@ class Message:
     def __str__(self):
         return '\n'.join(['%s:%s' % item for item in self.__dict__.items()])
 
-# light
-
 
 class Light(object):
 
     @property
     def location(self):
-        self._location
+        return self._location
 
     @location.setter
     def location(self, value):
@@ -128,14 +107,8 @@ class Light(object):
     def __str__(self):
         return '\n'.join(['%s:%s' % item for item in self.__dict__.items()])
 
-#
-# ApiClient
-#
 
-
-class YeeLightServer:
-
-    __instance = None
+class YeeLightServer(YLBaseServer):
 
     SUDDEN = 'sudden'
 
@@ -168,12 +141,6 @@ class YeeLightServer:
     def __init__(self):
         self._socket_scan = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._lights = []
-
-    def __new__(cls, *args, **kwargs):
-        if not cls.__instance:
-            cls.__instance = super(Singleton, cls).__new__(
-                cls, *args, **kwargs)
-        return cls.__instance
 
     # light prop
     def get_props(self, addr):
@@ -277,6 +244,9 @@ class YeeLightServer:
     def set_music(self, addr, arg):
         pass
 
+    def get_devices(self, *args):
+        pass
+
     # Light
     def get_lights(self):
         return self._lights
@@ -302,7 +272,8 @@ class YeeLightServer:
         except Exception, e:
             logging.warning('method(%s) error', e)
         finally:
-            self.get_props(location)
+            if location != '*':
+                self.get_props(location)
 
     # parse header
 
@@ -426,8 +397,7 @@ class YeeLightServer:
                                         socket.inet_aton(local_ip))
         self._socket_passive.close()
 
-    # start
-    def start(self):
+    def startup(self):
         # passive create  thread
         t1 = threading.Thread(target=self._start_passive)
         t1.setDaemon(True)
@@ -438,103 +408,12 @@ class YeeLightServer:
         t2.setDaemon(True)
         t2.start()
 
-
-class YLAutoHttpdServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
-
-    @property
-    def light_server(self):
-        return self._light_server
-
-    def run(self):
-        # yeelight
-        self._light_server = YeeLightServer()
-        self._light_server.start()
-        self.serve_forever()
-
-
-class YLAutoHttpdHandle(BaseHTTPServer.BaseHTTPRequestHandler):
-
-    html_index = None
-
-    def light_handle(self, location, method, param=None):
-        return self.server.light_server.ccmd(location, method, param)
-
-    def do_CMD(self):
-        method = self.headers.get('Method', None)
-        location = self.headers.get('Location', None)
-        param = self.headers.get('Param', None)
-        self.send_response(200)
-        self.send_header('Content-type', 'application/json')
-        self.end_headers()
-        if method:
-            self.light_handle(location, method, param)
-            lights = self.server.light_server.get_lights()
-            result = []
-            for light in lights:
-                result.append(light.to_dict())
-            self.wfile.write(json.dumps(result))
-        return
-
-    def do_DEVICES(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'application/json')
-        self.end_headers()
-        lights = self.server.light_server.get_lights()
+    def handle(self, args):
+        self.ccmd(args.get('location'), args.get('method'), args.get('param'))
         result = []
-        for light in lights:
+        for light in self.get_lights():
             result.append(light.to_dict())
-        self.wfile.write(json.dumps(result))
-        return
+        return result
 
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-Type', 'text/html')
-        self.end_headers()
-
-        if not self.html_index or debug:
-            self.html_index = open('../h5/yl_index.html').read()
-
-        self.wfile.write(self.html_index)
-        return
-
-    def translate_path(self, path):
-        path = path.split('?', 1)[0]
-        path = path.split('#', 1)[0]
-        trailing_slash = path.rstrip().endswith('/')
-        path = posixpath.normpath(urllib.unquote(path))
-        words = path.split('/')
-        words = filter(None, words)
-        path = os.getcwd()
-        for word in words:
-            drive, word = os.path.splitdrive(word)
-            head, word = os.path.split(word)
-            if word in (os.curdir, os.pardir):
-                continue
-            path = os.path.join(path, word)
-        if trailing_slash:
-            path += '/'
-        return path
-
-
-def run():
-    httpd = YLAutoHttpdServer(("", 8866), YLAutoHttpdHandle)
-    httpd.run()
-
-
-def usage():
-    print 'yeelight.py -h -d'
-    sys.exit(1)
-
-if __name__ == '__main__':
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "hd")
-    except getopt.GetoptError:
-        usage()
-
-    for op, value in opts:
-        if op == '-d':
-            debug = True
-        if op == '-h':
-            usage()
-
-    run()
+    def name(self):
+        return 'Yeelight'

@@ -130,7 +130,7 @@
               </div>
               <div class="form-group">
                 <label class="control-label">颜色</label>
-                <input class="form-control" v-model.number="light.rgb" @keyup.enter="set_rgb(light.location, light.rgb)" value="light.rgb">
+                <input class="form-control jscolor" v-model="light.rgb" @keyup.enter="set_rgb(light.location, light.rgb)" value="light.rgb">
               </div>
             </div>
           </div>
@@ -147,6 +147,7 @@
   <script src="https://cdn.bootcss.com/vue/2.2.4/vue.min.js"></script>
   <script src="https://cdn.bootcss.com/es6-promise/4.1.0/es6-promise.auto.min.js"></script>
   <script src="https://cdn.bootcss.com/axios/0.15.3/axios.min.js"></script>
+  <script src="https://cdn.bootcss.com/jscolor/2.0.4/jscolor.min.js"></script>
   <script>
     url = 'http://127.0.0.1:8866';
 
@@ -190,10 +191,7 @@
           });
         },
         refresh: function() {
-          var me = this;
-          me._ajax(url, 'DEVICES', function(data) {
-            me.$data.lights = data
-          })
+          this.cmd(location, 'get_devices');
         },
         cmd: function(location, method, param, callback) {
           var me = this;
@@ -202,6 +200,7 @@
             param = '{}';
           }
           headers = {
+            Class: 'Yeelight',
             Location: location,
             Method: method,
             Param: param || '{}'
