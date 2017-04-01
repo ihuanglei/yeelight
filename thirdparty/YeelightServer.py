@@ -401,7 +401,7 @@ class YeeLightServer(YLBaseServer):
         self._socket_passive.close()
 
     def startup(self):
-        # passive create  thread
+        # passive create thread
         t1 = threading.Thread(target=self._start_passive)
         t1.setDaemon(True)
         t1.start()

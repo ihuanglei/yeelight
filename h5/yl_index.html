@@ -149,7 +149,6 @@
   <script src="https://cdn.bootcss.com/axios/0.15.3/axios.min.js"></script>
   <script src="https://cdn.bootcss.com/jscolor/2.0.4/jscolor.min.js"></script>
   <script>
-    url = 'http://127.0.0.1:8866';
 
     Vue.filter('default', function(input, value) {
       value = value || '';
@@ -205,7 +204,7 @@
             Method: method,
             Param: param || '{}'
           }
-          me._ajax(url, 'CMD', function(data) {
+          me._ajax('/', 'CMD', function(data) {
             if (callback) {
               callback();
             } else {
