@@ -3,8 +3,6 @@ import json
 import BaseHTTPServer
 import SocketServer
 
-# reload(sys)
-# sys.setdefaultencoding('utf8')
 
 __version__ = "0.1"
 

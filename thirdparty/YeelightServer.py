@@ -5,7 +5,13 @@ import socket
 import threading
 import base64
 import logging
+import urllib
+import sys
 from server.YLAutoHttpdServer import YLBaseServer
+
+
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 
 class Message:
@@ -146,8 +152,7 @@ class YeeLightServer(YLBaseServer):
     def get_props(self, addr):
         try:
             ret_light = None
-            props = {'prop': ['name', 'power', 'model', 'color_mode',
-                              'hue', 'sat', 'rgb', 'bright']}
+            props = {'prop': ['name', 'power', 'hue', 'sat', 'rgb', 'bright']}
             ret = self.get_prop(addr, props)
             if ret:
                 result = json.loads(ret).get('result', [])
@@ -156,12 +161,10 @@ class YeeLightServer(YLBaseServer):
                         if light.location == addr:
                             light.name = result[0]
                             light.power = result[1]
-                            light.model = result[2]
-                            light.color_mode = result[3]
-                            light.hue = result[4]
-                            light.rgb = result[5]
-                            light.sat = result[6]
-                            light.bright = result[7]
+                            light.hue = result[2]
+                            light.rgb = result[3]
+                            light.sat = result[4]
+                            light.bright = result[5]
                             ret_light = light
                             break
             return ret
