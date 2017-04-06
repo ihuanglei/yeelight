@@ -360,6 +360,13 @@ class YeeLightServer(YLBaseServer):
     def _empty(self, *args):
         logging.debug('empty: %s', args)
 
+    def get_local_ip(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.connect(('8.8.8.8', 80))
+        (addr, port) = sock.getsockname()
+        sock.close()
+        return addr
+
     # _start_scan server
     def _start_scan(self):
         while True:
@@ -375,7 +382,7 @@ class YeeLightServer(YLBaseServer):
 
     # passive server
     def _start_passive(self):
-        local_ip = socket.gethostbyname(socket.gethostname())
+        local_ip = self.get_local_ip()
         self._socket_passive = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._socket_passive.setsockopt(
             socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
