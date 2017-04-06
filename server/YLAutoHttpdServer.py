@@ -4,10 +4,6 @@ import BaseHTTPServer
 import SocketServer
 
 
-__version__ = "0.1"
-
-debug = False
-
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
 
@@ -71,7 +67,7 @@ class YLAutoHttpdHandle(BaseHTTPServer.BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'text/html')
         self.end_headers()
 
-        if not self.html_index or debug:
+        if not self.html_index:
             self.html_index = open('h5/yl_index.html').read()
 
         self.wfile.write(self.html_index)

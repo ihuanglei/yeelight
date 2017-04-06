@@ -1,5 +1,8 @@
-import os
-from pocketsphinx import LiveSpeech
+import speech_recognition as sr
+import sys
+
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 
 class YLSpeech:
@@ -8,5 +11,6 @@ class YLSpeech:
 
 if __name__ == '__main__':
 
-    for phrase in LiveSpeech():
-        print(phrase)
+    for index, name in enumerate(sr.Microphone.list_microphone_names()):
+        print("Microphone with name \"{1}\" found for `Microphone(device_index={0})`".format(
+            index, name.encode('utf8')))

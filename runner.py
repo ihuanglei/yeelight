@@ -6,6 +6,10 @@ from server.YLAutoHttpdServer import YLAutoHttpdServer
 from server.YLAutoHttpdServer import YLAutoHttpdHandle
 from thirdparty.YeelightServer import YeeLightServer
 
+__author__ = 'Lei Huang'
+__version__ = '0.1-dev'
+__license__ = 'MIT'
+
 
 def usage():
     print 'runner.py -h -d'
@@ -19,8 +23,8 @@ if __name__ == '__main__':
         usage()
 
     for op, value in opts:
-        if op == '-d':
-            debug = True
+        # if op == '-d':
+        #     debug = True
         if op == '-h':
             usage()
 
