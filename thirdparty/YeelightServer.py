@@ -148,10 +148,9 @@ class YeeLightServer(YLBaseServer):
         self._socket_scan = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._lights = []
 
-    # light prop
+    # Light prop
     def get_props(self, addr):
         try:
-            ret_light = None
             props = {'prop': ['name', 'power', 'hue', 'sat', 'rgb', 'bright']}
             ret = self.get_prop(addr, props)
             if ret:
@@ -162,10 +161,9 @@ class YeeLightServer(YLBaseServer):
                             light.name = result[0]
                             light.power = result[1]
                             light.hue = result[2]
-                            light.rgb = result[3]
-                            light.sat = result[4]
+                            light.sat = result[3]
+                            light.rgb = result[4]
                             light.bright = result[5]
-                            ret_light = light
                             break
             return ret
         except Exception, e:
@@ -266,16 +264,19 @@ class YeeLightServer(YLBaseServer):
     # control command
     def ccmd(self, location, method, param):
         param = param or {}
+        do_next = True
         try:
             obj = json.loads(urllib.unquote(param))
         except Exception, e:
             obj = {}
         try:
             return getattr(self, method)(location, obj)
+        except socket.error:
+            do_next = False
         except Exception, e:
             logging.warning('method(%s) error', e)
         finally:
-            if location != '*':
+            if not do_next or location != '*':
                 self.get_props(location)
 
     # parse header

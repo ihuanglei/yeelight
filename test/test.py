@@ -13,7 +13,7 @@ Cache-Control: max-age=3600
 Location:yeelight://192.168.1.239: 55443
 NTS: ssdp: alive
 Server: POSIX, UPnP / 1.0 YGLC / 1
-id: 0x500000000015243f
+id: 0x100000000015243f
 model: color
 fw_ver: 18
 support: get_prop set_default set_power toggle set_bright start_cf stop_cf set_scene cron_add cron_get cron_del set_ct_abx set_rgb
