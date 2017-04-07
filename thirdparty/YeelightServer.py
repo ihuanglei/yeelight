@@ -271,8 +271,9 @@ class YeeLightServer(YLBaseServer):
             obj = {}
         try:
             return getattr(self, method)(location, obj)
-        except socket.error:
+        except socket.error, e:
             do_next = False
+            logging.warning('connect(%s) error', e)
         except Exception, e:
             logging.warning('method(%s) error', e)
         finally:
