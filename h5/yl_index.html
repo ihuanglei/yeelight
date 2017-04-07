@@ -190,7 +190,7 @@
           });
         },
         refresh: function() {
-          this.cmd(location, 'get_devices');
+          this.cmd('*', 'get_devices');
         },
         cmd: function(location, method, param, callback) {
           var me = this;
