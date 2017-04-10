@@ -39,6 +39,7 @@ class YLAutoHttpdServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
         return {}
 
     def run(self):
+        logging.info('Welcome to YuanLaiWangluo Auto Controller')
         for yl_server in self._yl_servers:
             logging.info('Server [%s] Startup', yl_server.name())
             yl_server.startup()

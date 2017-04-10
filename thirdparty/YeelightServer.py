@@ -114,6 +114,54 @@ class Light(object):
         return '\n'.join(['%s:%s' % item for item in self.__dict__.items()])
 
 
+class YeeLightClient(object):
+
+    def __init__(self, addr):
+        self._addr = addr
+        self._host, self._port = addr.split(':')
+        try:
+            self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._sock.settimeout(2)
+            self._sock.connect((self._host, int(self._port)))
+            self._connected = True
+            t1 = threading.Thread(target=self._run)
+            t1.setDaemon(True)
+            t1.start()
+        except socket.error, e:
+            logging.error(e)
+            self._connected = False
+
+    def _run(self):
+        while self._connected:
+            time.sleep(0.1)
+            try:
+                response = self._sock.recv(2048)
+                self._sock.settimeout(None)
+                print response
+            except socket.error, e:
+                logging.error(e)
+
+    def send(self, data):
+        if self._connected:
+            try:
+                self._sock.send(data)
+            except socket.error, e:
+                self._connected = False
+                logging.error(e)
+
+    def close(self):
+        self._sock.close()
+        self._connected = False
+
+    @property
+    def addr(self):
+        return self._addr
+
+    @property
+    def is_connected():
+        return self._connected
+
+
 class YeeLightServer(YLBaseServer):
 
     SUDDEN = 'sudden'
@@ -147,6 +195,7 @@ class YeeLightServer(YLBaseServer):
     def __init__(self):
         self._socket_scan = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._lights = []
+        self._light_clients = []
 
     # light prop
     def get_props(self, addr):
@@ -256,6 +305,7 @@ class YeeLightServer(YLBaseServer):
 
     # Light command search
     def search(self, *args):
+        del self._lights[:]
         command = self.SEARCH + self.CRLF + \
             'HOST: %s:%s' % (self.HOST_LIGHT, self.PORT_LIGHT) + self.CRLF + \
             'MAN: "ssdp:discover"' + self.CRLF + \
@@ -275,11 +325,26 @@ class YeeLightServer(YLBaseServer):
         except Exception, e:
             logging.warning('method(%s) error', e)
         finally:
-            if location != '*':
-                self.get_props(location)
+            pass
+            # if location != '*':
+            #     self.get_props(location)
+
+    # get connect light client
+    def _get_light_client(self, addr):
+        ret_client = None
+        for client in self._light_clients:
+            if client.addr == addr:
+                if client.is_connected:
+                    ret_client = client
+                    break
+
+        if not ret_client:
+            ret_client = YeeLightClient(addr)
+            self._light_clients.append(ret_client)
+
+        return ret_client
 
     # parse header
-
     def _parse(self, data):
         message = Message()
         try:
@@ -303,21 +368,13 @@ class YeeLightServer(YLBaseServer):
 
     # send command to Light
     def _cmd(self, addr, method, data):
-        try:
-            str = json.dumps(
-                {'id': int(time.time()), 'method': method, 'params': data})
-            logging.debug('send command %s [%s]', addr, str)
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(2)
-            host, port = addr.split(':')
-            sock.connect((host, int(port)))
-            sock.send(str + self.CRLF)
-            response = sock.recv(2048)
-            sock.close()
-            return response
-        except Exception, e:
-            logging.error(e)
-            return None
+        str = json.dumps(
+            {'id': int(time.time()), 'method': method, 'params': data})
+        logging.debug('send command %s [%s]', addr, str)
+        light_client = self._get_light_client(addr)
+        light_client.send(str + self.CRLF)
+        # response = sock.recv(2048)
+        # return response
 
     # discover
     def _discover(self, message):
@@ -372,12 +429,11 @@ class YeeLightServer(YLBaseServer):
         while True:
             try:
                 data, addr = self._socket_scan.recvfrom(2048)
-                logging.debug('Received:%s from %s',
+                logging.debug('Scanner Received:%s from %s',
                               re.compile('[\r|\n]').sub(' ', data), addr)
                 self._discover(self._parse(data))
             except socket.error, e:
                 pass
-            time.sleep(2)
         self._socket_scan.close()
 
     # passive server
@@ -395,7 +451,7 @@ class YeeLightServer(YLBaseServer):
         while True:
             try:
                 data, addr = self._socket_passive.recvfrom(2048)
-                logging.debug('Received:%s from %s',
+                logging.debug('Passive Received:%s from %s',
                               re.compile('[\r|\n]').sub(' ', data), addr)
                 self._discover(self._parse(data))
             except socket.error, e:
