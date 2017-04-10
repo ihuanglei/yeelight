@@ -197,10 +197,9 @@ class YeeLightServer(YLBaseServer):
         self._lights = []
         self._light_clients = []
 
-    # light prop
+    # Light prop
     def get_props(self, addr):
         try:
-            ret_light = None
             props = {'prop': ['name', 'power', 'hue', 'sat', 'rgb', 'bright']}
             ret = self.get_prop(addr, props)
             if ret:
@@ -211,10 +210,9 @@ class YeeLightServer(YLBaseServer):
                             light.name = result[0]
                             light.power = result[1]
                             light.hue = result[2]
-                            light.rgb = result[3]
-                            light.sat = result[4]
+                            light.sat = result[3]
+                            light.rgb = result[4]
                             light.bright = result[5]
-                            ret_light = light
                             break
             return ret
         except Exception, e:
@@ -322,6 +320,8 @@ class YeeLightServer(YLBaseServer):
             obj = {}
         try:
             return getattr(self, method)(location, obj)
+        except socket.error, e:
+            logging.warning('connect(%s) error', e)
         except Exception, e:
             logging.warning('method(%s) error', e)
         finally:
