@@ -31,19 +31,25 @@ class YLAutoHttpdServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
         self._yl_servers = list(server)
 
     def handle(self, args):
-        logging.debug('handle [%s]', args)
+        logging.debug('YLAutoHttpdServer Handle [%s]', args)
         for yl_server in self._yl_servers:
             if yl_server.name() == args.get('class', ''):
-                logging.debug('find server [%s]', yl_server.name())
+                logging.debug(
+                    'YLAutoHttpdServer Find server [%s]', yl_server.name())
                 return yl_server.handle(args)
         return {}
 
     def run(self):
-        logging.info('Welcome to YuanLaiWangluo Auto Controller')
-        for yl_server in self._yl_servers:
-            logging.info('Server [%s] Startup', yl_server.name())
-            yl_server.startup()
-        self.serve_forever()
+        try:
+            logging.info(
+                'Welcome to YuanLaiWangluo Auto Controller')
+            for yl_server in self._yl_servers:
+                logging.info(
+                    'Server [%s] Startup', yl_server.name())
+                yl_server.startup()
+            self.serve_forever()
+        except KeyboardInterrupt:
+            logging.info('Buy Buy')
 
 
 class YLAutoHttpdHandle(BaseHTTPServer.BaseHTTPRequestHandler):
