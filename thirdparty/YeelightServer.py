@@ -121,8 +121,6 @@ class Yeelight(object):
 
 class YeelightClient(object):
 
-    TIME_OUT = 2
-
     def __init__(self, addr):
         self._addr = addr
         self._host, self._port = addr.split(':')
@@ -133,7 +131,6 @@ class YeelightClient(object):
     def run(self):
         try:
             self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._sock.settimeout(self.TIME_OUT)
             self._sock.connect((self._host, int(self._port)))
             self._thread = threading.Thread(target=self._run)
             self._thread.setDaemon(True)
@@ -148,18 +145,17 @@ class YeelightClient(object):
                 response = self._sock.recv(2048)
                 if not response:
                     break
-                self._sock.settimeout(self.TIME_OUT)
+                self._sock.settimeout(None)
                 logging.debug('<< Yeelight Light Received: %s', response)
                 obj = json.loads(response)
                 method = obj.get('method', None)
                 if method == 'props':
                     params = obj.get('params', None)
                     if params:
-                        self._light.name = params.get('name', self._light.name)
+                        # self._light.name = params.get('name', self._light.name)
                         self._light.power = params.get(
                             'power', self._light.power)
-                        self._light.model = params.get(
-                            'model', self._light.model)
+                        # self._light.model = params.get('model', self._light.model)
                         self._light.color_mode = params.get(
                             'color_mode', self._light.color_mode)
                         self._light.rgb = params.get('rgb', self._light.rgb)
@@ -352,6 +348,7 @@ class YeelightServer(YLBaseServer):
                       re.compile('[\r|\n]').sub(' ', command))
         self._socket_scan.sendto(
             command, 0, (self.HOST_LIGHT, self.PORT_LIGHT))
+        return 'ok'
 
     # control command
     def ccmd(self, location, method, param):
@@ -422,8 +419,10 @@ class YeelightServer(YLBaseServer):
         try:
             light_client = self._get_light_client(addr)
             light_client.send(str + self.CRLF)
+            return 'ok'
         except Exception, e:
             logging.error('-- Yeelight (%s)', e)
+            return 'error'
 
     # discover
     def _discover(self, message):
@@ -523,11 +522,14 @@ class YeelightServer(YLBaseServer):
         self.search()
 
     def handle(self, args):
-        self.ccmd(args.get('location'), args.get('method'), args.get('param'))
-        result = []
-        for client in self._light_clients:
-            result.append(client.light.to_dict())
-        return result
+        method = args.get('method')
+        ret = self.ccmd(args.get('location'), method, args.get('param'))
+        if method == 'get_devices':
+            result = []
+            for client in self._light_clients:
+                result.append(client.light.to_dict())
+            return result
+        return ret
 
     def name(self):
         return 'Yeelight'

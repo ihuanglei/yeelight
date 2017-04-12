@@ -49,7 +49,7 @@ class YLAutoHttpdServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
                 yl_server.startup()
             self.serve_forever()
         except KeyboardInterrupt:
-            logging.info('Buy Buy')
+            logging.info('Bye Bye')
 
 
 class YLAutoHttpdHandle(BaseHTTPServer.BaseHTTPRequestHandler):

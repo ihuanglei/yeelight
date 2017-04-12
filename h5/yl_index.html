@@ -119,14 +119,14 @@
             </div>
             <div v-show="light.model == 'color'">
               <!-- <div v-show="light.color_mode == 3"> -->
-                <div class="form-group">
-                  <label class="control-label">色调 {{light.hue}}</label>
-                  <input v-model.number="light.hue" type="range" min="0" max="359" step="1" :value="light.hue" @change="set_hsv(light.location, light.hue, light.sat)">
-                </div>
-                <div class="form-group">
-                  <label class="control-label">饱和度 {{light.sat}}</label>
-                  <input v-model.number="light.sat" type="range" min="1" max="100" step="1" :value="light.sat" @change="set_hsv(light.location, light.hue, light.sat)">
-                </div>
+              <div class="form-group">
+                <label class="control-label">色调 {{light.hue}}</label>
+                <input v-model.number="light.hue" type="range" min="0" max="359" step="1" :value="light.hue" @change="set_hsv(light.location, light.hue, light.sat)">
+              </div>
+              <div class="form-group">
+                <label class="control-label">饱和度 {{light.sat}}</label>
+                <input v-model.number="light.sat" type="range" min="1" max="100" step="1" :value="light.sat" @change="set_hsv(light.location, light.hue, light.sat)">
+              </div>
               <!-- </div> -->
               <!-- <div class="form-group">
                 <label class="control-label">颜色</label>
@@ -153,10 +153,10 @@
       return input || value;
     })
 
-    var app = new Vue({
+    let app = new Vue({
       el: '#app',
       created: function() {
-        var me = this;
+        let me = this;
         this.refresh();
       },
       data: {
@@ -173,8 +173,8 @@
       },
       methods: {
         _ajax: function(url, method, callback, headers) {
-          var me = this;
-          callback = callback || $.noop();
+          let me = this;
+          callback = callback || function() {};
           me.$data.loading = true;
           axios.request({
             url: url,
@@ -184,11 +184,18 @@
             me.$data.loading = false;
             callback(response.data);
           }).catch(function(error) {
+            me.$data.loading = false;
             console.log(error);
           });
         },
         refresh: function() {
-          var me = this;
+          let me = this;
+          if (me.$data.loading) {
+            setTimeout(function() {
+              me.refresh();
+            }, 5000);
+            return;
+          }
           this.cmd('*', 'get_devices', function(data) {
             me.$data.lights = data
             setTimeout(function() {
@@ -197,7 +204,7 @@
           });
         },
         cmd: function(location, method, param, callback) {
-          var me = this;
+          let me = this;
           if (typeof(param) == 'function') {
             callback = param;
             param = '{}';
@@ -211,15 +218,13 @@
           me._ajax('/', 'CMD', function(data) {
             if (callback) {
               callback(data);
-            } else {
-              me.$data.lights = data
             }
           }, headers)
         },
         scan: function() {
-          var me = this;
+          let me = this;
           this.cmd('*', 'search', function() {
-            me.$data.loading = true;
+            me.$data.loading = false;
           })
         },
         set_name: function(location, name) {
@@ -235,13 +240,27 @@
           this.cmd(location, 'set_hsv', '{"hue": ' + hue + ',"sat":' + sat + '}');
         },
         power_on: function(location) {
-          this.cmd(location, 'power_on');
+          let me = this;
+          this.cmd(location, 'power_on', function() {
+            let light = me.getLight(location)
+            light.power = 'on';
+          });
         },
         power_off: function(location) {
-          this.cmd(location, 'power_off');
+          this.cmd(location, 'power_off', function() {
+            let light = me.getLight(location)
+            light.power = 'off';
+          });
         },
         save: function(location) {
           this.cmd(location, 'set_default');
+        },
+        getLight: function(location) {
+          for (var light of me.$data.lights) {
+            if (light.location == location) {
+              return light;
+            }
+          }
         }
       }
     });
