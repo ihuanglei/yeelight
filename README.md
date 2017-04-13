@@ -1,28 +1,44 @@
-## 设备官网
-https://www.yeelight.com
+## 智能服务器框架
 
-## 文档地址
-https://www.yeelight.com/download/Yeelight_Inter-Operation_Spec.pdf
-
-这里整合了yeelight的文档，重新封装了接口！
-
-## 使用http协议
+### 使用http协议
 
 ```
-[CMD|DEVICES] * HTTP/1.1
+CMD * HTTP/1.1
 Method:命令
 Location:地址及端口
 Param:参数(JSON字符串)
 ```
 
-### 刷新接口
-获取当前设别列表(json格式)
-
 ```
-DEVICES * HTTP/1.1
+runner.py 启动服务
 ```
 
-## 支持的命令
+### Yeelight 智能设备
+
+#### yeelight设备官网
+https://www.yeelight.com
+
+#### 文档地址
+https://www.yeelight.com/download/Yeelight_Inter-Operation_Spec.pdf
+
+
+目前实现了yeelight的调试
+
+启动后
+
+浏览器输入 http://{ip}:8866 打开h5测试页面
+
+
+### 支持的命令
+
+>get_devices  获取当前设备列表
+
+```
+CMD * HTTP/1.1
+Location:*
+Method:get_devices
+Param:
+```
 
 >power_on      打开灯
 1. effect  [sudden|smooth] (不必填)

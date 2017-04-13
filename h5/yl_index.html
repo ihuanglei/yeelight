@@ -55,8 +55,18 @@
     input[type=range]::-ms-track {
       height: 10px;
       border-radius: 5px;
-      box-shadow: 0 1px 1px #def3f8, inset 0 .125em .125em #ccc;
+      /*box-shadow: 0 1px 1px #def3f8, inset 0 .125em .125em #ccc;*/
       background-color: #fff;
+      border-color: transparent;
+      color: transparent;
+      padding: 5px;
+    }
+
+    input[type=range]::-ms-fill-lower,
+    input[type=range]::-ms-fill-upper {
+      border-radius: 5px;
+      box-shadow: 0 1px 1px #def3f8, inset 0 .125em .125em #ccc;
+      background: transparent;
     }
 
     input[type=range]:focus {
@@ -153,10 +163,10 @@
       return input || value;
     })
 
-    let app = new Vue({
+    var app = new Vue({
       el: '#app',
       created: function() {
-        let me = this;
+        var me = this;
         this.refresh();
       },
       data: {
@@ -173,7 +183,7 @@
       },
       methods: {
         _ajax: function(url, method, callback, headers) {
-          let me = this;
+          var me = this;
           callback = callback || function() {};
           me.$data.loading = true;
           axios.request({
@@ -181,15 +191,15 @@
             method: method,
             headers: headers,
           }).then(function(response) {
-            me.$data.loading = false;
             callback(response.data);
-          }).catch(function(error) {
             me.$data.loading = false;
+          }).catch(function(error) {
             console.log(error);
+            me.$data.loading = false;
           });
         },
         refresh: function() {
-          let me = this;
+          var me = this;
           if (me.$data.loading) {
             setTimeout(function() {
               me.refresh();
@@ -204,7 +214,7 @@
           });
         },
         cmd: function(location, method, param, callback) {
-          let me = this;
+          var me = this;
           if (typeof(param) == 'function') {
             callback = param;
             param = '{}';
@@ -222,7 +232,7 @@
           }, headers)
         },
         scan: function() {
-          let me = this;
+          var me = this;
           this.cmd('*', 'search', function() {
             me.$data.loading = false;
           })
@@ -240,15 +250,16 @@
           this.cmd(location, 'set_hsv', '{"hue": ' + hue + ',"sat":' + sat + '}');
         },
         power_on: function(location) {
-          let me = this;
+          var me = this;
           this.cmd(location, 'power_on', function() {
-            let light = me.getLight(location)
+            var light = me.getLight(location)
             light.power = 'on';
           });
         },
         power_off: function(location) {
+          var me = this;
           this.cmd(location, 'power_off', function() {
-            let light = me.getLight(location)
+            var light = me.getLight(location)
             light.power = 'off';
           });
         },
@@ -256,7 +267,8 @@
           this.cmd(location, 'set_default');
         },
         getLight: function(location) {
-          for (var light of me.$data.lights) {
+          for (var i = 0; i < this.$data.lights.length; ++i) {
+            var light = this.$data.lights[i];
             if (light.location == location) {
               return light;
             }
