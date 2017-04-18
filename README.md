@@ -218,3 +218,24 @@ Location:192.168.1.100:12345
 Method:search
 Param:
 ```
+
+---
+Dockerfile:
+
+FROM python:2.7
+
+MAINTAINER email@huanglei.org
+
+RUN apt-get update
+
+RUN apt-get install build-essential libpulse-dev swig -y
+
+RUN pip install whoosh
+
+RUN pip install jieba
+
+RUN pip install SpeechRecognition
+
+RUN pip install pocketsphinx
+
+EXPOSE 8866

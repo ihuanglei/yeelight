@@ -1,14 +1,40 @@
 #!/usr/bin/env python
 
 import sys
+import os
+import glob
 import getopt
+import re
 from server.YLAutoHttpdServer import YLAutoHttpdServer
 from server.YLAutoHttpdServer import YLAutoHttpdHandle
-from thirdparty.YeelightServer import YeelightServer
 
 __author__ = 'Lei Huang'
-__version__ = '0.1-dev'
+__version__ = '0.2-dev'
 __license__ = 'MIT'
+
+
+def load_server():
+    '''
+        load server
+        filename end with *Server.py
+    '''
+    servers = []
+    thirdparty_path = sys.path[
+        0] + os.path.sep + 'thirdparty' + os.path.sep + '*' + os.path.sep + '*Server.py'
+    for server_file in glob.glob(thirdparty_path):
+        server_dir = os.path.dirname(server_file)
+        server_name = os.path.basename(server_file)[0:-3]
+        package = 'thirdparty.%s.%s' % (
+            server_dir.split(os.path.sep)[-1], server_name)
+        sys.path.append(server_dir)
+        try:
+            module_meta = __import__(
+                package, globals(), locals(), [server_name])
+            class_meta = getattr(module_meta, server_name)
+            servers.append(class_meta)
+        except Exception, e:
+            print 'Load Server error %s' % e
+    return servers
 
 
 def usage():
@@ -39,5 +65,6 @@ if __name__ == '__main__':
             version()
 
     httpd = YLAutoHttpdServer(("", 8866), YLAutoHttpdHandle)
-    httpd.add_server(YeelightServer())
+    for server in load_server():
+        httpd.add_server(server())
     httpd.run()

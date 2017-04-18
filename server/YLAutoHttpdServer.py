@@ -1,34 +1,20 @@
 import logging
 import json
+import sys
+import os
 import BaseHTTPServer
 import SocketServer
 
-
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
-
-
-class YLBaseServer(object):
-
-    def name(self):
-        pass
-
-    def handle(self, args):
-        pass
-
-    def startup(self, *args):
-        pass
-
-    def stop(self, *args):
-        pass
 
 
 class YLAutoHttpdServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
 
     _yl_servers = []
 
-    def add_server(self, *server):
-        self._yl_servers = list(server)
+    def add_server(self, server):
+        self._yl_servers.append(server)
 
     def handle(self, args):
         logging.debug('YLAutoHttpdServer Handle [%s]', args)
@@ -56,13 +42,16 @@ class YLAutoHttpdHandle(BaseHTTPServer.BaseHTTPRequestHandler):
 
     html_index = None
 
+    def _parse_request(self, headers):
+        return {
+            'class': headers.get('Class', None),
+            'method': headers.get('Method', None),
+            'location': headers.get('Location', None),
+            'param': headers.get('Param', None)
+        }
+
     def do_CMD(self):
-        args = {'class': self.headers.get('Class', None),
-                'method': self.headers.get('Method', None),
-                'location': self.headers.get('Location', None),
-                'param': self.headers.get('Param', None)
-                }
-        result = self.server.handle(args)
+        result = self.server.handle(self._parse_request(self.headers))
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
         self.end_headers()
@@ -75,7 +64,8 @@ class YLAutoHttpdHandle(BaseHTTPServer.BaseHTTPRequestHandler):
         self.end_headers()
 
         if not self.html_index:
-            self.html_index = open('h5/yl_index.html').read()
+            self.html_index = open(
+                sys.path[0] + os.path.sep + 'h5' + os.path.sep + 'yl_index.html').read()
 
         self.wfile.write(self.html_index)
         return

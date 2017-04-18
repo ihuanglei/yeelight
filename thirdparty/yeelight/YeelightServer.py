@@ -8,7 +8,7 @@ import logging
 import urllib
 import sys
 import errno
-from server.YLAutoHttpdServer import YLBaseServer
+from thirdparty.YLBaseServer import YLBaseServer
 
 
 reload(sys)
