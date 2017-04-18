@@ -5,7 +5,7 @@ reload(sys)
 sys.setdefaultencoding('utf8')
 
 
-class YLSpeech:
+class YLSpeecher:
     pass
 
 
