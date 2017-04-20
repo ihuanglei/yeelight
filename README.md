@@ -22,7 +22,6 @@ runner.py 启动服务
 
 ### Dockerfile:
 
----
 ```
 FROM python:2.7
 
@@ -35,7 +34,6 @@ EXPOSE 8866
 ENTRYPOINT ["python", "./auto/runner.py"]
 
 ```
----
 
 ```
 docker build -t ylauto .
